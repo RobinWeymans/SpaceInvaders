@@ -24,6 +24,7 @@ class State8080 {
 public:
     ConditionCodes cc;
     uint8_t		*memory;
+    uint32_t memory_size;
 
     uint16_t pc; //Program counter
     uint16_t sp; //Stack pointer
@@ -77,6 +78,7 @@ public:
     uint16_t popAddress(){ return popByte() | popByte() << 8; }
 
     void incrementPC(uint16_t i=1){ pc += i; }
+    void incrementBC(){ if(++c == 0) b++; }
     void incrementDE(){ if(++e == 0) d++; }
     void incrementHL(){ if(++l == 0) h++; }
 

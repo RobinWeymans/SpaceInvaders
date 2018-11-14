@@ -4,7 +4,7 @@
 
 #include "State8080.h"
 
-State8080::State8080(unsigned int memory_size) {
+State8080::State8080(unsigned int memory_size) : memory_size(memory_size){
     memory = new uint8_t[memory_size];
 }
 
