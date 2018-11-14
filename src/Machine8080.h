@@ -11,13 +11,25 @@
 #include <SFML/Config.hpp>
 #include "State8080.h"
 
+#define EXIT sf::Keyboard::Escape
+#define COIN sf::Keyboard::C
+#define LEFT sf::Keyboard::Left
+#define RIGHT sf::Keyboard::Right
+#define FIRE sf::Keyboard::Space
+#define START sf::Keyboard::Enter
+
 class Machine8080 {
 public:
-    Machine8080();
+    Machine8080(uint32_t memory_size);
+
     State8080 state;
+    uint8_t in_port;
+    uint8_t shift0, shift1, shift_offset;
+
     sf::RenderWindow window;
 
     void loadFileAtMemory(const std::string& filename, const uint16_t offset);
+    void dumpMemoryToFile(const std::string& filename);
     void prettyPrint() const;
     void startEmulation();
 private:

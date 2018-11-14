@@ -8,7 +8,7 @@
 #include <iostream>
 #include <algorithm>
 
-Machine8080::Machine8080() : state(0x10000/* 16Kb of memory */) {
+Machine8080::Machine8080(uint32_t memory_size) : state(memory_size) {
     screenScale = 1;
     windowHeight = 256 * screenScale;
     windowWidth = 224 * screenScale;
@@ -90,7 +90,22 @@ void Machine8080::processInput() {
             case sf::Event::Closed: window.close(); break;
             case sf::Event::KeyPressed:{
                 switch (event.key.code){
-                    case sf::Keyboard::Escape: window.close(); break;
+                    case EXIT: window.close(); break;
+                    case COIN: std::cerr << "COIN" << std::endl; in_port |= 0x01; break;
+                    case START: in_port |= 0x04; break;
+                    case FIRE: std::cerr << "FIRE" << std::endl; in_port |= 0x10; break;
+                    case LEFT: in_port |= 0x20; break;
+                    case RIGHT: in_port |= 0x40; break;
+                    default: break;
+                }
+            }
+            case sf::Event::KeyReleased:{
+                switch (event.key.code){
+                    case COIN: in_port &= ~0x01; break;
+                    case START: in_port &= ~0x04; break;
+                    case FIRE: in_port &= ~0x10; break;
+                    case LEFT: in_port &= ~0x20; break;
+                    case RIGHT: in_port &= ~0x40; break;
                     default: break;
                 }
             }
@@ -115,6 +130,7 @@ void Machine8080::runEmulation(Machine8080 *const machine) {
                 if(machine->interupt_waiting){
                     machine->generateInterupt();
                 }
+//                machine->disassembleOpcode();
                 cyclesToWait = machine->emulateOpcode();
             }
             cyclesToWait--;
@@ -432,7 +448,10 @@ int Machine8080::emulateOpcode() {
             state.incrementPC(3);
             break;
         case 0x02: unimplementedInstruction();
-        case 0x03: unimplementedInstruction();
+        case 0x03:
+            state.incrementBC();
+            state.incrementPC();
+            break;
         case 0x04: unimplementedInstruction();
         case 0x05:
             state.b--;
@@ -575,7 +594,7 @@ int Machine8080::emulateOpcode() {
             state.writeMemory(state.getHL(), state.getNextByte());
             state.pc++;
             break;
-        case 0x37: state.cc.cy = 1; break;
+        case 0x37: state.cc.cy = 1; state.incrementPC(); break;
         case 0x38: unimplementedInstruction();
         case 0x39: unimplementedInstruction();
         case 0x3A:
@@ -617,22 +636,16 @@ int Machine8080::emulateOpcode() {
         case 0x53: unimplementedInstruction();
         case 0x54: unimplementedInstruction();
         case 0x55: unimplementedInstruction();
-        case 0x56:
-            state.d = state.readMemoryAtHL();
-            state.incrementPC();
-            break;
-        case 0x57: unimplementedInstruction();
+        case 0x56: state.d = state.readMemoryAtHL(); state.incrementPC(); break;
+        case 0x57: state.d = state.a; state.incrementPC(); break;
         case 0x58: unimplementedInstruction();
         case 0x59: unimplementedInstruction();
         case 0x5A: unimplementedInstruction();
         case 0x5B: unimplementedInstruction();
         case 0x5C: unimplementedInstruction();
         case 0x5D: unimplementedInstruction();
-        case 0x5E:
-            state.e = state.readMemoryAtHL();
-            state.incrementPC();
-            break;
-        case 0x5F: unimplementedInstruction();
+        case 0x5E: state.e = state.readMemoryAtHL(); state.incrementPC(); break;
+        case 0x5F: state.e = state.a; state.incrementPC(); break;
 
         case 0x60: unimplementedInstruction();
         case 0x61: unimplementedInstruction();
@@ -640,11 +653,8 @@ int Machine8080::emulateOpcode() {
         case 0x63: unimplementedInstruction();
         case 0x64: unimplementedInstruction();
         case 0x65: unimplementedInstruction();
-        case 0x66:
-            state.h = state.readMemoryAtHL();
-            state.incrementPC();
-            break;
-        case 0x67: unimplementedInstruction();
+        case 0x66: state.h = state.readMemoryAtHL(); state.incrementPC(); break;
+        case 0x67: state.h = state.a; state.incrementPC(); break;
         case 0x68: unimplementedInstruction();
         case 0x69: unimplementedInstruction();
         case 0x6A: unimplementedInstruction();
@@ -652,10 +662,8 @@ int Machine8080::emulateOpcode() {
         case 0x6C: unimplementedInstruction();
         case 0x6D: unimplementedInstruction();
         case 0x6E: unimplementedInstruction();
-        case 0x6F:
-            state.l = state.a;
-            state.incrementPC();
-            break;
+        case 0x6F: state.l = state.a; state.incrementPC(); break;
+
         case 0x70: unimplementedInstruction();
         case 0x71: unimplementedInstruction();
         case 0x72: unimplementedInstruction();
@@ -663,29 +671,14 @@ int Machine8080::emulateOpcode() {
         case 0x74: unimplementedInstruction();
         case 0x75: unimplementedInstruction();
         case 0x76: unimplementedInstruction();
-        case 0x77:
-            state.writeMemory(state.getHL(), state.a);
-            state.incrementPC();
-            break;
+        case 0x77: state.writeMemory(state.getHL(), state.a); state.incrementPC(); break;
         case 0x78: unimplementedInstruction();
         case 0x79: unimplementedInstruction();
-        case 0x7A:
-            state.a = state.d;
-            state.incrementPC();
-            break;
-        case 0x7B:
-            state.a = state.e;
-            state.incrementPC();
-            break;
-        case 0x7C:
-            state.a = state.h;
-            state.incrementPC();
-            break;
+        case 0x7A: state.a = state.d; state.incrementPC(); break;
+        case 0x7B: state.a = state.e; state.incrementPC(); break;
+        case 0x7C: state.a = state.h; state.incrementPC(); break;
         case 0x7D: unimplementedInstruction();
-        case 0x7E:
-            state.a = state.readMemoryAtHL();
-            state.incrementPC();
-            break;
+        case 0x7E: state.a = state.readMemoryAtHL(); state.incrementPC(); break;
         case 0x7F: unimplementedInstruction();
 
         case 0x80: unimplementedInstruction();
@@ -796,7 +789,11 @@ int Machine8080::emulateOpcode() {
         }
         case 0xC7: unimplementedInstruction();
         case 0xC8:
-            if(state.cc.z) state.pc = state.popAddress();
+            if(state.cc.z) {
+                state.pc = state.popAddress();
+            }else{
+                state.incrementPC();
+            }
             break;
         case 0xC9: //RET
             state.pc = state.popAddress();
@@ -833,6 +830,18 @@ int Machine8080::emulateOpcode() {
                 state.incrementPC(3);
             break;
         case 0xD3: //OUT
+        {
+//            std::cerr << "OUT" << std::endl;
+            switch(state.getNextByte()){
+                case 2:
+                    shift_offset = state.a & (uint8_t)0x7;
+                    break;
+                case 4:
+                    shift0 = shift1;
+                    shift1 = state.a;
+                    break;
+            }
+        }
             state.incrementPC(2);
             break;
         case 0xD4: unimplementedInstruction();
@@ -842,7 +851,12 @@ int Machine8080::emulateOpcode() {
             break;
         case 0xD6: unimplementedInstruction();
         case 0xD7: unimplementedInstruction();
-        case 0xD8: unimplementedInstruction();
+        case 0xD8:
+            if(state.cc.cy != 0){
+                state.pc = state.popAddress();
+            }else{
+                state.incrementPC();
+            }
         case 0xD9: unimplementedInstruction();
         case 0xDA:
             if(state.cc.cy){
@@ -851,9 +865,21 @@ int Machine8080::emulateOpcode() {
                 state.incrementPC(3);
             }
             break;
-        case 0xDB: // IN
+        case 0xDB:{ // IN
+//            std::cerr << "IN " << std::hex << (int) state.getNextByte() << std::endl;
+            switch(state.getNextByte()){
+                case 0: state.a = 1; break;
+                case 1: state.a = in_port; break;
+                case 3: {
+                    uint16_t v = (shift1<<8) | shift0;
+                    state.a = (v >> (8-shift_offset)) & 0xff;
+                    break;
+                }
+                default: break;
+            }
             state.incrementPC(2);
             break;
+        }
         case 0xDC: unimplementedInstruction();
         case 0xDD: unimplementedInstruction();
         case 0xDE: unimplementedInstruction();
@@ -967,4 +993,12 @@ void Machine8080::generateInterupt() {
     state.pushPC();
     state.pc = interuptNumber * 8;
     interupt_enable = interupt_waiting = false;
+}
+
+void Machine8080::dumpMemoryToFile(const std::string &filename) {
+    std::ofstream file (filename, std::ofstream::binary);
+    for(int i=0; i<0x10000; i++){
+        file << state.memory++;
+    }
+    file.close();
 }
