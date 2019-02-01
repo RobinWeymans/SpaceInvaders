@@ -16,6 +16,7 @@ Machine8080::Machine8080(uint32_t memory_size) : state(memory_size) {
     screenRefreshRate = 60.0; //60Hz
     window.create(sf::VideoMode(windowHeight, windowWidth), "Space invaders");
     isRunning = true;
+    debug_mode = false;
 }
 
 void Machine8080::loadFileAtMemory(const std::string &filename, const uint16_t offset) {
@@ -122,19 +123,25 @@ void Machine8080::runEmulation(Machine8080 *const machine) {
 
     //run the program as long as the window is open
     while(machine->isRunning) {
+        if(!machine->debug_mode){
+            auto thisRun = std::chrono::system_clock::now();
 
-        auto thisRun = std::chrono::system_clock::now();
-
-        if (((std::chrono::duration<double>) (thisRun - lastOpcode)).count() > 1.0 / machine->frequency) {
-            if (cyclesToWait == 0) {
-                if(machine->interupt_waiting){
-                    machine->generateInterupt();
+            if (((std::chrono::duration<double>) (thisRun - lastOpcode)).count() > 1.0 / machine->frequency) {
+                if (cyclesToWait == 0) {
+                    if(machine->interupt_waiting){
+                        machine->generateInterupt();
+                    }
+//                    machine->disassembleOpcode();
+                    cyclesToWait = machine->emulateOpcode();
                 }
-//                machine->disassembleOpcode();
-                cyclesToWait = machine->emulateOpcode();
+                cyclesToWait--;
+                lastOpcode = thisRun;
             }
-            cyclesToWait--;
-            lastOpcode = thisRun;
+        }else{ // If we are in debug mode
+            std::string cmd;
+            std::cout << "debug>";
+            getline(std::cin, cmd);
+            machine->processDebugCommand(cmd);
         }
     }
 }

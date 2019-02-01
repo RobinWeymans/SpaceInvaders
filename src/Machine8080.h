@@ -32,6 +32,8 @@ public:
     void dumpMemoryToFile(const std::string& filename);
     void prettyPrint() const;
     void startEmulation();
+
+    void enableDebugMode();
 private:
     std::thread graphics_thread;
     std::thread emulation_thread;
@@ -44,8 +46,11 @@ private:
     bool interupt_enable;
     bool interupt_waiting;
     int interuptNumber;
+    bool debug_mode;
+    const std::string default_command = "run 1";
 
     void processInput();
+    void processDebugCommand(const std::string& cmd);
     int emulateOpcode();
     void unimplementedInstruction();
     int disassembleOpcode(){return disassembleOpcode(state.pc);}

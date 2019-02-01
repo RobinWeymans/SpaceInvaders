@@ -13,6 +13,7 @@ int main()
     machine->loadFileAtMemory("res/rom/invaders.f",0x1000);
     machine->loadFileAtMemory("res/rom/invaders.e",0x1800);
 //    machine->dumpMemoryToFile("../res/memdump");
+    machine->enableDebugMode();
     machine->startEmulation();
     return 0;
 }
