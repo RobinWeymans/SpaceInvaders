@@ -10,14 +10,16 @@
 #include <iostream>
 
 typedef struct {
-    bool	cy:1;
-    bool	pad:1;
-    bool	p:1;
-    bool	pad2:1;
-    bool	ac:1;
-    bool	pad3:1;
-    bool	z:1;
-    bool	s:1;
+    bool	cy;
+    bool	pad;
+    bool	p;
+    bool	pad2;
+    bool	ac;
+    bool	pad3;
+    bool	z;
+    bool	s;
+    uint8_t toByte();
+    void fromByte(uint8_t byte);
 }ConditionCodes;
 
 class State8080 {
@@ -66,13 +68,17 @@ public:
     uint16_t getDE(){ return d << 8 | e; }
     uint16_t getHL(){ return h << 8 | l; }
     uint16_t getBC(){ return b << 8 | c; }
-    uint8_t getPSW(){ return (cc.z | cc.s << 1 | cc.p << 2 | cc.cy << 3 | cc.ac << 4);}
+    uint8_t getPSW(){ return cc.toByte(); }
+    
+    void call(bool condition = true);
+    void jump(bool condition = true);
+    void ret(bool condition = true);
 
     void push(uint8_t byte){writeMemory(--sp, byte);}
     void pushDE(){push(d); push(e);}
     void pushHL(){push(h); push(l);}
     void pushBC(){push(b); push(c);}
-    void pushPSW(){ push(a); push(getPSW()); }
+    void pushPSW(){ push(a); push(cc.toByte()); }
     void pushPC(){ push((pc & 0xFF00) >> 8); push(pc & 0xFF);}
     uint8_t popByte(){ return memory[sp++]; }
     uint16_t popAddress(){ return popByte() | popByte() << 8; }
@@ -81,8 +87,11 @@ public:
     void incrementBC(){ if(++c == 0) b++; }
     void incrementDE(){ if(++e == 0) d++; }
     void incrementHL(){ if(++l == 0) h++; }
+    
+    void decrementHL(){ if(--l == 0xff) h--; }
 
     void logicFlagsA();
+    void arithFlagsA(uint16_t);
     void flagsZSP(uint8_t);
 };
 

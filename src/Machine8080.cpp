@@ -12,7 +12,7 @@ Machine8080::Machine8080(uint32_t memory_size) : state(memory_size) {
     screenScale = 1;
     windowHeight = 256 * screenScale;
     windowWidth = 224 * screenScale;
-    frequency = 2000000.0; // 2MHz
+    frequency = 20000000.0; // 2MHz
     screenRefreshRate = 60.0; //60Hz
     window.create(sf::VideoMode(windowHeight, windowWidth), "Space invaders");
     isRunning = true;
@@ -46,6 +46,7 @@ void Machine8080::startEmulation() {
             if(interupt_enable && !interupt_waiting){
                 interuptNumber = interuptNumber == 1 ? 2 : 1;
                 interupt_waiting = true;
+				std::cout << "Interupt waiting" << std::endl;
             }
 
 
@@ -138,8 +139,10 @@ void Machine8080::runEmulation(Machine8080 *const machine) {
                 lastOpcode = thisRun;
             }
         }else{ // If we are in debug mode
+//            machine->disassembleOpcode();
+            
             std::string cmd;
-            std::cout << "debug>";
+//            std::cout << "debug>";
             getline(std::cin, cmd);
             machine->processDebugCommand(cmd);
         }
